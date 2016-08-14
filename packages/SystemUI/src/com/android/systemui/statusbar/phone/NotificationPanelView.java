@@ -3312,9 +3312,9 @@ public class NotificationPanelView extends PanelView implements
                     Settings.System.QS_COLOR_SWITCH, 0);
             setQSPanelLogo();
             setQSStroke();
-	    if (mQsColorSwitch == 1) {
+	    if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
             setQSBackgroundColor();
-	    } else if (mQsColorSwitch == 2) {
+	    } else if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
 	    updateQsBgGradientOrientation();
 	    }
             mBlurDarkColorFilter = Color.LTGRAY;
@@ -3347,7 +3347,7 @@ Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
 
             if (mQSStroke != 0) {
                 qSGd.setCornerRadius(mCustomCornerRadius);
-		if (mQsColorSwitch == 2) {
+		if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
                 mQsContainer.setBackground(qSGd);
 	        mQsPanel.setDetailBackgroundColor(bgColor);
 		}
@@ -3468,7 +3468,7 @@ Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
 	int mStockBg = res.getColor(R.color.quick_settings_panel_background);
         mQsColorSwitch = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.QS_COLOR_SWITCH, 0);
-	if (mQsColorSwitch == 1) {
+	if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
         	if (mQsContainer != null) {
                		 mQsContainer.getBackground().setColorFilter(
                          mQSBackgroundColor, Mode.SRC_ATOP);
@@ -3477,7 +3477,6 @@ Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
             		mQsPanel.setDetailBackgroundColor(mQSBackgroundColor);
        			 }
 			}  else if (mQsColorSwitch == 0) {
-
 		if (mQsContainer != null) {
                		 mQsContainer.getBackground().setColorFilter(
                          mStockBg, Mode.SRC_ATOP);

@@ -394,7 +394,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
                 Settings.System.QS_HEADER_COLOR, 0xFFFFFFFF);
 	int mQsDetailColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.QS_HEADER_TEXT_COLOR, 0xFFFFFFFF);
-	if (mQsColorSwitch == 1) {
+	if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
 	if (mHeaderView != null) {
             mHeaderView.getBackground().setColorFilter(
                         mHeaderColor, Mode.SRC_IN);
@@ -402,7 +402,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 	if ( mQsDetailHeaderTitle != null) {
 	    mQsDetailHeaderTitle.setTextColor(mQsDetailColor);
 	  }
-	} else if (mQsColorSwitch == 2) {
+	} else if (mQsColorSwitch == 0) {
 	if (mHeaderView != null) {
             mHeaderView.getBackground().setColorFilter(null);
         }
@@ -487,7 +487,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
         if (mSBEHStroke != 0) {
             gradientDrawable.setCornerRadius(mSBEHCornerRadius);
-	    if (mQsColorSwitch == 2) { 
+	    if (mQsColorSwitch == 2 || mQsColorSwitch == 4) { 
             setBackground(gradientDrawable);
 	    }
         }

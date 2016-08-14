@@ -264,7 +264,9 @@ public class QSTileView extends ViewGroup {
         updateColors();
         if (mQsColorSwitch == 1 || mQsColorSwitch == 2) {
             icon.setColorFilter(mIconColor, Mode.SRC_ATOP);
-        } 
+        } else if (mQsColorSwitch == 3 || mQsColorSwitch == 4) {
+	     icon.clearColorFilter();
+	}
         return icon;
     }
 
