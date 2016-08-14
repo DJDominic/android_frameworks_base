@@ -3255,6 +3255,9 @@ public class NotificationPanelView extends PanelView implements
            } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.QS_BACKGROUND_GRADIENT_ORIENTATION))) {
                 updateQsBgGradientOrientation();
+           }  else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR))) {
+                setQSBackgroundColor();
            }
 		update();
         }
@@ -3312,11 +3315,8 @@ public class NotificationPanelView extends PanelView implements
                     Settings.System.QS_COLOR_SWITCH, 0);
             setQSPanelLogo();
             setQSStroke();
-	    if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
             setQSBackgroundColor();
-	    } else if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
 	    updateQsBgGradientOrientation();
-	    }
             mBlurDarkColorFilter = Color.LTGRAY;
             mBlurMixedColorFilter = Color.GRAY;
             mBlurLightColorFilter = Color.DKGRAY;
@@ -3328,29 +3328,42 @@ public class NotificationPanelView extends PanelView implements
     private void setQSStroke() {
         final GradientDrawable qSGd = new GradientDrawable();
 	final int bgColor = Settings.System.getInt(mContext.getContentResolver(),
-Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
+		Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
         if (mQsContainer != null) {
             if (mQSStroke == 0) {
-                /*qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
-                qSGd.setStroke(0, mContext.getResources().getColor(R.color.system_accent_color));
-                qSGd.setCornerRadius(mCustomCornerRadius);
-                mQsContainer.setBackground(qSGd);*/
-                // Don't do anything when disabled, it fucks up themes that use drawable instead of color
+	      	if (mQsColorSwitch == 0) {
+                   qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	   	 } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+		   qSGd.setColor(mQSBackgroundColor);
+		 } else  if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
+	 	   qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
+	        }
+                mQsContainer.setBackground(qSGd);
             } else if (mQSStroke == 1) { // use accent color for border
-                qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
+	      if (mQsColorSwitch == 0) {
+                   qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	   	 } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+		   qSGd.setColor(mQSBackgroundColor);
+		 } else  if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
+	 	   qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
+	        }
                 qSGd.setStroke(mCustomStrokeThickness, mContext.getResources().getColor(R.color.system_accent_color),
                         mCustomDashWidth, mCustomDashGap);
             } else if (mQSStroke == 2) { // use custom border color
-                qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
+   	      if (mQsColorSwitch == 0) {
+                   qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	   	 } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+		   qSGd.setColor(mQSBackgroundColor);
+		 } else if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
+	 	   qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
+	        }
                 qSGd.setStroke(mCustomStrokeThickness, mCustomStrokeColor, mCustomDashWidth, mCustomDashGap);
             }
 
             if (mQSStroke != 0) {
                 qSGd.setCornerRadius(mCustomCornerRadius);
-		if (mQsColorSwitch == 2 || mQsColorSwitch == 4) {
                 mQsContainer.setBackground(qSGd);
 	        mQsPanel.setDetailBackgroundColor(bgColor);
-		}
             }
         }
     }
@@ -3478,8 +3491,7 @@ Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
        			 }
 			}  else if (mQsColorSwitch == 0) {
 		if (mQsContainer != null) {
-               		 mQsContainer.getBackground().setColorFilter(
-                         mStockBg, Mode.SRC_ATOP);
+               		 mQsContainer.getBackground().clearColorFilter();
            		 }
        		if (mQsPanel != null) {
             		mQsPanel.setDetailBackgroundColor(mStockBg);

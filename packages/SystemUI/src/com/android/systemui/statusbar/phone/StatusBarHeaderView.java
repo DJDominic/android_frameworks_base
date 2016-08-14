@@ -390,8 +390,6 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 	mQsDetailHeaderTitle = (TextView) mQsDetailHeader.findViewById(android.R.id.title);
 	int mStockHeaderText = res.getColor(R.color.qs_tile_text);
 	mBackgroundImage = (ImageView) findViewById(R.id.background_image);
-        int mHeaderColor = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.QS_HEADER_COLOR, 0xFFFFFFFF);
 	int mQsDetailColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.QS_HEADER_TEXT_COLOR, 0xFFFFFFFF);
 	if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
@@ -472,24 +470,40 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         final int mSBEHCustomDashGap = Settings.System.getInt(
                 resolver, Settings.System.STATUS_BAR_EXPANDED_HEADER_STROKE_DASH_WIDTH, 10);
         if (mSBEHStroke == 0) { // Disable by setting border color to match bg color
-            gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    if (mQsColorSwitch == 0) {
+            gradientDrawable.setColor(mContext.getResources().getColor(R.color.system_secondary_color));
+	    } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+	    gradientDrawable.setColor(mHeaderColor);
+	    } else {
+	    gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    }
             gradientDrawable.setStroke(0, mSBEHStrokeColor);
             gradientDrawable.setCornerRadius(mSBEHCornerRadius);
             setBackground(gradientDrawable);
         } else if (mSBEHStroke == 1) { // use accent color for border
-            gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    if (mQsColorSwitch == 0) {
+            gradientDrawable.setColor(mContext.getResources().getColor(R.color.system_secondary_color));
+	    } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+	    gradientDrawable.setColor(mHeaderColor);
+	    } else {
+	    gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    }
             gradientDrawable.setStroke(mSBEHStrokeThickness, mContext.getResources().getColor(R.color.system_accent_color),
                     mSBEHCustomDashWidth, mSBEHCustomDashGap);
         } else if (mSBEHStroke == 2) { // use custom border color
-            gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    if (mQsColorSwitch == 0) {
+            gradientDrawable.setColor(mContext.getResources().getColor(R.color.system_secondary_color));
+	    } else if (mQsColorSwitch == 1 || mQsColorSwitch == 3) {
+	    gradientDrawable.setColor(mHeaderColor);
+	    } else {
+	    gradientDrawable.setColors(SBEHeaderColorHelper.getBackgroundColors(mContext));
+	    }
             gradientDrawable.setStroke(mSBEHStrokeThickness, mSBEHStrokeColor, mSBEHCustomDashWidth, mSBEHCustomDashGap);
         }
 
         if (mSBEHStroke != 0) {
             gradientDrawable.setCornerRadius(mSBEHCornerRadius);
-	    if (mQsColorSwitch == 2 || mQsColorSwitch == 4) { 
             setBackground(gradientDrawable);
-	    }
         }
 }
 
@@ -1698,6 +1712,8 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
                     UserHandle.USER_CURRENT);
             mQsColorSwitch = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.QS_COLOR_SWITCH, 0);
+            mHeaderColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.QS_HEADER_COLOR, 0xFFFFFFFF);
 	    setStatusBarHeaderFontStyle	(mStatusBarHeaderFontStyle);
 	    setStatusBarWeatherFontStyle(mStatusBarHeaderWeatherFont);
 	    setStatusBarClockFontStyle(mStatusBarHeaderClockFont);

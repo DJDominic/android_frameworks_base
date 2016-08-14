@@ -1201,7 +1201,7 @@ public class VolumeDialog {
         }
     }
 
-     public void setVolumeStroke () {
+     public void setVolumeStroke() {
         mVolumeDialogStroke = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.VOLUME_DIALOG_STROKE, 1);
         mCustomStrokeColor = Settings.System.getInt(mContext.getContentResolver(),
@@ -1219,26 +1219,35 @@ public class VolumeDialog {
                Settings.System.VOLUME_DIALOG_COLOR_SWITCH, 0) == 1 ;
 
         if (mVolumeDialogStroke == 0) { // Disable by setting border thickness to 0
-            volumeDialogGd.setColors(VolumeDialogColorHelper.getBackgroundColors(mContext));
-            volumeDialogGd.setStroke(0, mCustomStrokeColor);
-            volumeDialogGd.setCornerRadius(mCustomCornerRadius);
 	    if (mDialogSwitch) {
-            mDialogView.setBackground(volumeDialogGd);
-	    }
-        } else if (mVolumeDialogStroke == 1) { // use accent color for border
             volumeDialogGd.setColors(VolumeDialogColorHelper.getBackgroundColors(mContext));
+	    } else {
+	    volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	    volumeDialogGd.setStroke(0, mContext.getResources().getColor(R.color.system_accent_color));
+   	    }
+	    volumeDialogGd.setStroke(0, mCustomStrokeColor);
+            volumeDialogGd.setCornerRadius(mCustomCornerRadius);
+            mDialogView.setBackground(volumeDialogGd);
+        } else if (mVolumeDialogStroke == 1) { // use accent color for border
+	    if (mDialogSwitch) {
+            volumeDialogGd.setColors(VolumeDialogColorHelper.getBackgroundColors(mContext));
+	    } else {
+	    volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	    }
             volumeDialogGd.setStroke(mCustomStrokeThickness, mContext.getResources().getColor(R.color.system_accent_color),
                     mCustomDashWidth, mCustomDashGap);
         } else if (mVolumeDialogStroke == 2) { // use custom border color
+	    if (mDialogSwitch) {
             volumeDialogGd.setColors(VolumeDialogColorHelper.getBackgroundColors(mContext));
+	    } else {
+	    volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+	    }
             volumeDialogGd.setStroke(mCustomStrokeThickness, mCustomStrokeColor, mCustomDashWidth, mCustomDashGap);
         }
 
         if (mVolumeDialogStroke != 0) {
             volumeDialogGd.setCornerRadius(mCustomCornerRadius);
-	    if (mDialogSwitch) {
             mDialogView.setBackground(volumeDialogGd);
-	    }
         }
 }
 
