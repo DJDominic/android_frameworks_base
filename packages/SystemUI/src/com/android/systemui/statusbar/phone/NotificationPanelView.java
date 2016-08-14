@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.*;
 import android.content.pm.ResolveInfo;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -39,6 +40,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.GradientDrawable.Orientation;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -100,6 +102,8 @@ import com.android.systemui.statusbar.*;
 
 import cyanogenmod.providers.CMSettings;
 
+import com.android.internal.util.rr.QSColorHelper;
+
 import java.util.List;
 
 public class NotificationPanelView extends PanelView implements
@@ -138,7 +142,7 @@ public class NotificationPanelView extends PanelView implements
     public static final long DOZE_ANIMATION_DURATION = 700;
     private CmLockPatternUtils mLockPatternUtils;
 
-    private boolean mQsColorSwitch = false;
+    private int mQsColorSwitch;
     public boolean mStatusBarLockedOnSecureKeyguard;
 
 
@@ -161,6 +165,8 @@ public class NotificationPanelView extends PanelView implements
     private int mTrackingPointer;
     private VelocityTracker mVelocityTracker;
     private boolean mQsTracking;
+    private int mBgOrientation;
+    private GradientDrawable qSGd;
 
     /**
      * If set, the ongoing touch gesture might both trigger the expansion in {@link PanelView} and
@@ -605,6 +611,7 @@ public class NotificationPanelView extends PanelView implements
         mQsNavbarScrim = findViewById(R.id.qs_navbar_scrim);
         mAfforanceHelper = new KeyguardAffordanceHelper(this, getContext());
         mLastOrientation = getResources().getConfiguration().orientation;
+	qSGd = new GradientDrawable();
 
         // recompute internal state when qspanel height changes
         mQsContainer.addOnLayoutChangeListener(new OnLayoutChangeListener() {
@@ -620,6 +627,7 @@ public class NotificationPanelView extends PanelView implements
         });
 
         setQSPanelLogo();
+	
         setQSStroke();
         setQSBackgroundColor();   
         mLockPatternUtils = new CmLockPatternUtils(getContext());
@@ -3196,8 +3204,19 @@ public class NotificationPanelView extends PanelView implements
                     Settings.System.QS_PANEL_LOGO_ALPHA),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.QS_BACKGROUND_COLOR),
-                    false, this, UserHandle.USER_ALL);
+                    Settings.System.QS_BACKGROUND_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_COLOR_SWITCH), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR_START), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR_CENTER), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR_END), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_GRADIENT_USE_CENTER_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_GRADIENT_ORIENTATION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.BLUR_SCALE_PREFERENCE_KEY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -3224,6 +3243,19 @@ public class NotificationPanelView extends PanelView implements
         @Override
         public void onChange(boolean selfChange, Uri uri) {
 	   ContentResolver resolver = mContext.getContentResolver();
+	 if (uri.equals(Settings.System.getUriFor(
+		Settings.System.QS_BACKGROUND_COLOR_START))
+                || uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR_CENTER))
+                || uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_GRADIENT_USE_CENTER_COLOR))
+                || uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_COLOR_END))) {
+                 setQSStroke();
+           } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.QS_BACKGROUND_GRADIENT_ORIENTATION))) {
+                updateQsBgGradientOrientation();
+           }
 		update();
         }
 
@@ -3276,9 +3308,15 @@ public class NotificationPanelView extends PanelView implements
                     Settings.System.STATUS_BAR_EXPANDED_ENABLED_PREFERENCE_KEY, 0, UserHandle.USER_CURRENT) == 1;
             mTranslucencyPercentage = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.TRANSLUCENT_QUICK_SETTINGS_PRECENTAGE_PREFERENCE_KEY, 60);
+            mQsColorSwitch = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.QS_COLOR_SWITCH, 0);
             setQSPanelLogo();
             setQSStroke();
+	    if (mQsColorSwitch == 1) {
             setQSBackgroundColor();
+	    } else if (mQsColorSwitch == 2) {
+	    updateQsBgGradientOrientation();
+	    }
             mBlurDarkColorFilter = Color.LTGRAY;
             mBlurMixedColorFilter = Color.GRAY;
             mBlurLightColorFilter = Color.DKGRAY;
@@ -3289,6 +3327,8 @@ public class NotificationPanelView extends PanelView implements
 
     private void setQSStroke() {
         final GradientDrawable qSGd = new GradientDrawable();
+	final int bgColor = Settings.System.getInt(mContext.getContentResolver(),
+Settings.System.QS_BACKGROUND_COLOR_START, 0xff263238);
         if (mQsContainer != null) {
             if (mQSStroke == 0) {
                 /*qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
@@ -3297,19 +3337,44 @@ public class NotificationPanelView extends PanelView implements
                 mQsContainer.setBackground(qSGd);*/
                 // Don't do anything when disabled, it fucks up themes that use drawable instead of color
             } else if (mQSStroke == 1) { // use accent color for border
-                qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+                qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
                 qSGd.setStroke(mCustomStrokeThickness, mContext.getResources().getColor(R.color.system_accent_color),
                         mCustomDashWidth, mCustomDashGap);
             } else if (mQSStroke == 2) { // use custom border color
-                qSGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+                qSGd.setColors(QSColorHelper.getBackgroundColors(mContext));
                 qSGd.setStroke(mCustomStrokeThickness, mCustomStrokeColor, mCustomDashWidth, mCustomDashGap);
             }
 
             if (mQSStroke != 0) {
                 qSGd.setCornerRadius(mCustomCornerRadius);
+		if (mQsColorSwitch == 2) {
                 mQsContainer.setBackground(qSGd);
+	        mQsPanel.setDetailBackgroundColor(bgColor);
+		}
             }
         }
+    }
+
+    private void updateQsBgGradientOrientation() {
+        Orientation orientation = Orientation.TOP_BOTTOM;
+        mBgOrientation =
+                QSColorHelper.getQsBgGradientOrientation(mContext);
+        if (mBgOrientation == 45) {
+            orientation = Orientation.BL_TR;
+        } else if (mBgOrientation == 90) {
+            orientation = Orientation.BOTTOM_TOP;
+        } else if (mBgOrientation == 135) {
+            orientation = Orientation.BR_TL;
+        } else if (mBgOrientation == 180) {
+            orientation = Orientation.RIGHT_LEFT;
+        } else if (mBgOrientation == 225) {
+            orientation = Orientation.TR_BL;
+        } else if (mBgOrientation == 270) {
+            orientation = Orientation.TOP_BOTTOM;
+        } else if (mBgOrientation == 315) {
+            orientation = Orientation.TL_BR;
+        }
+        qSGd.setOrientation(orientation);
     }
 
     private void setQSPanelLogo() {
@@ -3401,10 +3466,9 @@ public class NotificationPanelView extends PanelView implements
 	final Resources res = getContext().getResources();
         ContentResolver resolver = mContext.getContentResolver();
 	int mStockBg = res.getColor(R.color.quick_settings_panel_background);
-        mQsColorSwitch = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.QS_COLOR_SWITCH, 0,
-                UserHandle.USER_CURRENT) == 1;
-	if (mQsColorSwitch) {
+        mQsColorSwitch = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.QS_COLOR_SWITCH, 0);
+	if (mQsColorSwitch == 1) {
         	if (mQsContainer != null) {
                		 mQsContainer.getBackground().setColorFilter(
                          mQSBackgroundColor, Mode.SRC_ATOP);
@@ -3412,7 +3476,7 @@ public class NotificationPanelView extends PanelView implements
        		if (mQsPanel != null) {
             		mQsPanel.setDetailBackgroundColor(mQSBackgroundColor);
        			 }
-			}  else {
+			}  else if (mQsColorSwitch == 0) {
 
 		if (mQsContainer != null) {
                		 mQsContainer.getBackground().setColorFilter(

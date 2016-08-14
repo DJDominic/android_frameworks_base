@@ -407,7 +407,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private BatteryMeterView mBatteryView;
     private BatteryLevelTextView mBatteryTextView;
 
-    private boolean mQsColorSwitch = false;
+    private int mQsColorSwitch;
     public boolean mColorSwitch = false ;
     private  View mIcon;
     public SignalTileView mSignalView;	
@@ -983,8 +983,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mBrightnessControl = CMSettings.System.getIntForUser(
 			resolver, CMSettings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0,
 			UserHandle.USER_CURRENT) == 1;
-		mQsColorSwitch = Settings.System.getIntForUser(resolver,
-			Settings.System.QS_COLOR_SWITCH, 0, mCurrentUserId) == 1;
+		mQsColorSwitch = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.QS_COLOR_SWITCH, 0);
 		mQsIconColor = Settings.System.getIntForUser(resolver,
 			Settings.System.QS_ICON_COLOR, 0xFFFFFFFF, mCurrentUserId);
 		mLabelColor = Settings.System.getIntForUser(resolver,
@@ -3252,7 +3252,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
     }
 
-   public void updateQsColors() {		
+   public void updateQsColors() {
 	mNotificationPanel.setQSBackgroundColor();
 	mNotificationPanel.setQSColors();
 	}
